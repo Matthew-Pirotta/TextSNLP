@@ -3,28 +3,24 @@ import os
 from multiprocessing import Pool, cpu_count
 from bs4 import BeautifulSoup
 
-def readFile(filePath:str)-> Counter:
-    wordOccurrences = Counter()
-    #NOTE do not have 'c' and 'y'
-    acceptedCharacters = {'a', 'b', 'ċ', 'd', 'e', 'f', 'g', 'ġ', 'h', 'ħ', 'i', 'j', 
-    'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'z', 'ż', "'", '-'}
-    with open(filePath, 'r', encoding='utf-8') as file:
-        for line in file:
-            words = line.strip().split()
-            if not words: continue #skip empty lines
+#TODO NOTE some sort of filtering? all lower case?
+def readFile(filePath:str, n:int) -> Counter:
+    n_gram_occurrences = Counter()
 
-            word = words[0] #only interested in first column
-            word = word.lower()
-            
-            if all(char in acceptedCharacters for char in word):
-               # print(word)
-                wordOccurrences[word] += 1                
-    print(f"loaded document {filePath} with {wordOccurrences.total()} words")
-    return wordOccurrences
+    sentences = extract_sentences(filePath)
 
+    for sentence in sentences:
+        for n_gram in generate_n_gram(sentence, n):
+            n_gram_occurrences[tuple(n_gram)] += 1
 
-def extract_sentences_first_column(vrt_text):
-    soup = BeautifulSoup(vrt_text, "xml")
+    print(f"loaded document {filePath} with {n_gram_occurrences.total()} {n}-grams")
+    return n_gram_occurrences
+
+def extract_sentences(filePath: str) -> list[list[str]]:
+    with open(filePath, "r", encoding="utf-8") as file:
+        vrt_text = file.read()
+
+    soup = BeautifulSoup(vrt_text, "lxml-xml")
     sentences = []
     
     for s_tag in soup.find_all("s"):
@@ -40,61 +36,49 @@ def extract_sentences_first_column(vrt_text):
 
 
 
-def readCorpus() -> Counter:
+def readCorpus(n:int) -> Counter:
     corpusDir = "Corpus"
     
     txtFiles = [os.path.join(corpusDir, filename) 
                 for filename in os.listdir(corpusDir) 
-                if filename.endswith(".txt")]
+                if filename.endswith(".vrt")]
     
+    args = [(filePath, n) for filePath in txtFiles]
     with Pool(processes=cpu_count()) as pool:
-        results = pool.map(readFile, txtFiles)
+        results = pool.starmap(readFile, args)
     
-    wordOccurrences = Counter()
+    n_gram_occurrences = Counter()
     for result in results:
-        wordOccurrences.update(result)
+        n_gram_occurrences.update(result)
     
-    print(f"Total words in corpus: {wordOccurrences.total()}")
-    return wordOccurrences
+    print(f"Total words in corpus: {n_gram_occurrences.total()}")
+    return n_gram_occurrences
 
 #Reading roughly 1GB of 5.37GB
-def readSample() -> Counter:
+def readSample(n:int) -> Counter:
     corpusDir = "Corpus"
     
-    files = ["malti03.parl.4.txt", "malti03.law.txt", "malti03.opinion.2.txt", "malti03.news.1.txt"]
-    wordOccurrences = Counter()
+    files = ["malti04.academic.001.vrt", "malti04.administration.001.vrt", "malti04.blogs.001.vrt"]
+    n_gram_occurrences = Counter()
     
     for filename in files:
         filePath = os.path.join(corpusDir, filename)
         if os.path.isfile(filePath):
-            subOccurrence = readFile(filePath)
-            wordOccurrences.update(subOccurrence)
-    print(f"num words in sample: {wordOccurrences.total()}")
-    return wordOccurrences
+            subOccurrence = readFile(filePath,n)
+            n_gram_occurrences.update(subOccurrence)
+    print(f"num words in sample: {n_gram_occurrences.total()}")
+    return n_gram_occurrences
 
-def generate_n_gram(sentence:list[str],n:int) -> list[list[str]]:
-    ngrams = []
+def generate_n_gram(sentence:list[str],n:int) -> list[tuple[str]]:
+    n_grams = []
     upperbound = len(sentence) - n
     for i in range(upperbound+1):
-        ngram = sentence[i:i+n]
-        ngrams.append(ngram)
+        n_gram = tuple(sentence[i:i+n])
+        n_grams.append(n_gram)
     
-    return ngrams
+    return n_grams
 
 
 if __name__ == '__main__':
-    with open("Corpus/malti04.academic.001.vrt", "r", encoding="utf-8") as file:
-        vrt_text = file.read()
-
-        sentences = extract_sentences_first_column(vrt_text)
-
-        # Show first 2 sentences
-        for i, sent in enumerate(sentences[:2]):
-            print(f"Sentence {i+1}: {sent}")
-
-        print("--------------")
-        print(generate_n_gram(sentences[1], 1))
-        print("--------------")
-        print(generate_n_gram(sentences[1], 2))
-        print("--------------")
-        print(generate_n_gram(sentences[1], 3))
+    n_gram_occurrences = readCorpus(2)
+    #print(n_gram_occurrences)

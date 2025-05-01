@@ -1,0 +1,2 @@
+- Reading the corpus was tested by reading a single file, and printing the first 2 sentences
+- ngram was tested by performing 1,2,3 grams on the aforementioned second sentence

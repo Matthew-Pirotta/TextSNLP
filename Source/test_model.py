@@ -31,7 +31,7 @@ def test_vanilla_bigram_prob():
     model.ngrams[0] = Counter({("the",): 4})
     model.total_tokens = [4, 2, 0]
     prob = model.vanilla_ngram_prob(NGramType.BIGRAM, "cat", ("the",))
-    assert pytest.approx(prob) == 0.5
+    assert prob == pytest.approx(0.5)
 
 def test_calc_sentence_prob_unigram():
     model = Model("test")
@@ -62,6 +62,24 @@ def test_calc_sentence_prob_bigram():
     
     assert isinstance(log_prob, float)
     assert log_prob < 0  # Should be negative since some probabilities < 1
+
+def test_calc_perplexity_with_vanilla_unigram():
+    model = Model("perplexity_vanilla")
+    
+    train_sentences = [
+        ["<s>", "I", "love", "cats", "</s>"],
+        ["<s>", "You", "love", "dogs", "</s>"]
+    ]
+    
+    model.train(train_sentences)
+
+    # Use one of the training sentences as test data
+    test_sentences = [["<s>", "I", "love", "cats", "</s>"]]
+
+    perplexity = model.calc_perplexity(test_sentences, NGramType.UNIGRAM, model.vanilla_ngram_prob)
+
+    assert perplexity == pytest.approx(6.6, abs=1e-2)
+
 
 # ---------- Edge Case ----------
 

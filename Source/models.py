@@ -12,11 +12,12 @@ class NGramType(Enum):
     TRIGRAM = 2
  
 class Model():
+    #NOTE todo pass var for upperbound of n-grams)
     def __init__(self, name: str):
         self.name = name
         self.ngrams:list[Counter] = [Counter(), Counter(), Counter()]
         self.vocabulary = set()
-        self.total_tokens:list = [0,0,0]
+        self.total_tokens:list[int] = [0] * len(self.ngrams)
     
     def train(self, train_sentences):
         print(f"Training {self.name} model...")
@@ -40,7 +41,6 @@ class Model():
             self.total_tokens[i] = sum(ngram.values())
 
         print(f"Model trained with {len(self.vocabulary)} unique words and {self.total_tokens} total tokens")
-
 
     def vanilla_ngram_prob(self, n_gram_type:NGramType, word, prev_words:NGram) -> float:
         n_gram = tuple(prev_words + (word,))
@@ -88,5 +88,17 @@ class Model():
             prev_words = sentence[i-n:i]
             """
 
-    def calc_perplexity(self):
-        pass
+    def calc_perplexity(self, test_sentences:Sentences, n_gram_type:NGramType, prob_func) -> float:
+        total_log_prob = 0.0
+        total_words = 0
+
+        for sentence in test_sentences:
+            total_log_prob += self.calc_sentence_prob(sentence, n_gram_type, prob_func)
+            total_words += len(sentence)
+        
+        if total_words == 0:
+            return float('inf')
+        
+        avg_log_prob = total_log_prob / total_words
+        perplexity = math.exp(-avg_log_prob)
+        return perplexity

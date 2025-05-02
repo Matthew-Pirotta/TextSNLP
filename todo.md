@@ -1,1 +1,0 @@
-convert sentences to tuples?

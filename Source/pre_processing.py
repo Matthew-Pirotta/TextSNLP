@@ -5,7 +5,7 @@ from multiprocessing import Pool
 
 Sentence = list[str]
 Sentences = list[Sentence]
-NGram = tuple[str]
+NGram = tuple[str, ...]
 NGrams = list[NGram]
 
 __all__ = ["Sentence", "Sentences", "NGram", "NGrams", "PreProcessing"]
@@ -56,13 +56,13 @@ class PreProcessing:
         print(f"Total sentences in corpus: {len(corpus)}")
         return corpus
     
-    #Reading roughly 1GB of 5.37GB
+    #Reading roughly 1.7GB of ?
     @staticmethod
     def readSample(files = None) -> Sentences:
         corpusDir = "Corpus"
 
         if not files: 
-            files = ["malti04.academic.001.vrt", "malti04.administration.001.vrt", "malti04.blogs.001.vrt"]
+            files = ["malti04.administration.085.vrt", "malti04.web.vrt", "malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
 
 
         corpus = []

@@ -16,7 +16,7 @@ class Model():
         self.name = name
         self.ngrams:list[Counter] = [Counter(), Counter(), Counter()]
         self.vocabulary = set()
-        self.total_tokens:list = []
+        self.total_tokens:list = [0,0,0]
     
     def train(self, train_sentences):
         print(f"Training {self.name} model...")
@@ -33,12 +33,14 @@ class Model():
                 ngram.update(PreProcessing.generate_n_grams(sentence, n))
     
             self.vocabulary.update(word for word in sentence)
-            print(f"Model trained with {len(self.vocabulary)} unique words and {self.total_tokens} total tokens")
 
 
         #Total tokens for each ngram
         for i, ngram in enumerate(self.ngrams):
             self.total_tokens[i] = sum(ngram.values())
+
+        print(f"Model trained with {len(self.vocabulary)} unique words and {self.total_tokens} total tokens")
+
 
     def vanilla_ngram_prob(self, n_gram_type:NGramType, word, prev_words:NGram) -> float:
         n_gram = tuple(prev_words + (word,))
@@ -58,7 +60,6 @@ class Model():
         if (n_minus_1_gram not in n_minus_1_model) or (n_minus_1_model[n_minus_1_gram] == 0): return 0
 
         return n_model[n_gram] / n_minus_1_model[n_minus_1_gram]
-
 
     def calc_sentence_prob(self, sentence:Sentence, n_gram_type:NGramType, prob_func) -> float:
         #P(w1, w2, ..., wn) = P(wi| wn-t,wn-t)

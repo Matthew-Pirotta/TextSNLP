@@ -39,7 +39,7 @@ def test_calc_sentence_prob_unigram():
     model.total_tokens = [4, 0, 0]
 
     sentence = ["<s>", "the", "cat", "</s>"]
-    log_prob = model.calc_sentence_prob(sentence, NGramType.UNIGRAM, model.vanilla_ngram_prob)
+    log_prob = model.calc_n_gram_sent_prob(sentence, NGramType.UNIGRAM, model.vanilla_ngram_prob)
     assert log_prob < 0  # Should be negative log-probability
 
 def test_calc_sentence_prob_bigram():
@@ -58,10 +58,25 @@ def test_calc_sentence_prob_bigram():
     model.total_tokens[1] += 2
 
     # Run bigram probability calculation
-    log_prob = model.calc_sentence_prob(sentence, NGramType.BIGRAM, model.vanilla_ngram_prob)
+    log_prob = model.calc_n_gram_sent_prob(sentence, NGramType.BIGRAM, model.vanilla_ngram_prob)
     
     assert isinstance(log_prob, float)
     assert log_prob < 0  # Should be negative since some probabilities < 1
+
+#TODO wrong for now need to see stuff
+"""def test_vanilla_interpolation_prob():
+    model = Model("test")
+
+    model.ngrams[0] = Counter({("<s>",): 2,("the",): 2,("cat",): 1,("</s>",): 1 })
+    model.ngrams[1] = Counter({("<s>", "the"): 2,("the", "cat"): 1,("cat", "</s>"): 1})
+    model.total_tokens = [6, 4, 0]
+
+    sentence = ["<s>", "the", "cat", "</s>"]
+
+    log_prob = model.calc_n_gram_sent_prob(sentence, NGramType.BIGRAM, model.vanilla_ngram_prob)
+
+    expected_log_prob = -0.6931  # from log(0.5)
+    assert log_prob == pytest.approx(expected_log_prob, abs=1e-4)"""
 
 def test_calc_perplexity_with_vanilla_unigram():
     model = Model("perplexity_vanilla")
@@ -86,5 +101,5 @@ def test_calc_perplexity_with_vanilla_unigram():
 def test_empty_sentence_prob():
     model = Model("empty")
     model.train([["<s>", "</s>"]])
-    prob = model.calc_sentence_prob(["<s>", "</s>"], NGramType.UNIGRAM, model.vanilla_ngram_prob)
+    prob = model.calc_n_gram_sent_prob(["<s>", "</s>"], NGramType.UNIGRAM, model.vanilla_ngram_prob)
     assert prob <= 0

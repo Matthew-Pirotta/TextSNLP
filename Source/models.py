@@ -1,10 +1,11 @@
 from collections import Counter
-from enum import Enum
+from enum import IntEnum
 import math
 
 from pre_processing import *
 
-class NGramType(Enum):
+#TODO convert to int enum
+class NGramType(IntEnum):
     #TODO see actual value encoding
     #TODO NOTE iterpolation -1?
     UNIGRAM = 0
@@ -54,20 +55,33 @@ class Model():
 
         # High order n-grams (2+)
         n_minus_1_gram = tuple(prev_words)
-        n_model =  self.ngrams[n_gram_type.value]
-        n_minus_1_model = self.ngrams[n_gram_type.value-1]
+        n_model =  self.ngrams[n_gram_type]
+        n_minus_1_model = self.ngrams[n_gram_type-1]
 
         if (n_minus_1_gram not in n_minus_1_model) or (n_minus_1_model[n_minus_1_gram] == 0): return 0
 
         return n_model[n_gram] / n_minus_1_model[n_minus_1_gram]
+    
+    def interpolation_prob(self, word, prev_words:NGram, lambdas:list[float] = [0.1, 0.3, 0.6]) -> float:
+        """lambdas - [unigram, bigram, trigram, ...]"""
+        highest_n = 1 + len(prev_words)
 
-    def calc_sentence_prob(self, sentence:Sentence, n_gram_type:NGramType, prob_func) -> float:
+        total_prob = 0
+        for i in range(highest_n):
+            n_gram_type = NGramType(i)
+            context = prev_words[-i:] if i > 0 else ()  # last i words
+            prob += self.vanilla_ngram_prob(n_gram_type, word, context)
+            total_prob += lambdas[i] * prob
+
+        return total_prob
+
+    def calc_n_gram_sent_prob(self, sentence:Sentence, n_gram_type:NGramType, prob_func) -> float:
         #P(w1, w2, ..., wn) = P(wi| wn-t,wn-t)
         log_prob = 0.0
 
-        for i in range(n_gram_type.value, len(sentence)):
+        for i in range(n_gram_type, len(sentence)):
             word = sentence[i]
-            prev_words = tuple(sentence[i-n_gram_type.value:i])
+            prev_words = tuple(sentence[i-n_gram_type:i])
             word_prob = prob_func(n_gram_type, word, prev_words)
 
             if word_prob > 0:
@@ -76,13 +90,12 @@ class Model():
                 log_prob += -float('inf')
         
         return log_prob
-    
 
     #TODO IDK #Until model has a window of its n, a lower order n is used
     def interpolation_logic(self):
         """
         for i in range(1, len(sentence)):
-            n = min(i, model_type.value)
+            n = min(i, model_type)
             word = sentence[i]
             #TODO NOTE possible bug when (i-n) is less than 0 but i dont think its possible. IM pretty sure its yapping hard
             prev_words = sentence[i-n:i]
@@ -93,7 +106,7 @@ class Model():
         total_words = 0
 
         for sentence in test_sentences:
-            total_log_prob += self.calc_sentence_prob(sentence, n_gram_type, prob_func)
+            total_log_prob += self.calc_n_gram_sent_prob(sentence, n_gram_type, prob_func)
             total_words += len(sentence)
         
         if total_words == 0:

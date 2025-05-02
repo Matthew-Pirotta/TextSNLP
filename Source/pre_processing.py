@@ -5,6 +5,10 @@ from multiprocessing import Pool
 
 Sentence = list[str]
 Sentences = list[Sentence]
+NGram = tuple[str]
+NGrams = list[NGram]
+
+__all__ = ["Sentence", "Sentences", "NGram", "NGrams", "PreProcessing"]
 
 random.seed(71)
 
@@ -85,7 +89,7 @@ class PreProcessing:
         return train_sentences, test_sentences
     
     @staticmethod
-    def generate_n_gram(sentence:Sentence,n:int) -> list[tuple[str]]:
+    def generate_n_grams(sentence:Sentence,n:int) -> NGrams:
         n_grams = []
         upperbound = len(sentence) - n
         for i in range(upperbound+1):

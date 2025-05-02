@@ -1,1 +1,1 @@
-test train split
+convert sentences to tuples?

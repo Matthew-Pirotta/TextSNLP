@@ -1,8 +1,8 @@
 from collections import Counter
 from enum import Enum
-from abc import ABC, abstractmethod
+import math
 
-from pre_processing import PreProcessing, Sentence, Sentences
+from pre_processing import *
 
 class NGramType(Enum):
     #TODO see actual value encoding
@@ -10,8 +10,8 @@ class NGramType(Enum):
     UNIGRAM = 0
     BIGRAM = 1
     TRIGRAM = 2
-
-class Model(ABC):
+ 
+class Model():
     def __init__(self, name: str):
         self.name = name
         self.ngrams:list[Counter] = [Counter(), Counter(), Counter()]
@@ -30,7 +30,7 @@ class Model(ABC):
         for sentence in train_sentences:
             for i, ngram in enumerate(self.ngrams):
                 n = i+1
-                ngram.update(PreProcessing.generate_n_gram(sentence, n))
+                ngram.update(PreProcessing.generate_n_grams(sentence, n))
     
             self.vocabulary.update(word for word in sentence)
             print(f"Model trained with {len(self.vocabulary)} unique words and {self.total_tokens} total tokens")
@@ -40,11 +40,11 @@ class Model(ABC):
         for i, ngram in enumerate(self.ngrams):
             self.total_tokens[i] = sum(ngram.values())
 
-    def vanilla_ngram_prob(self, NGramType:NGramType, word, *prev_words) -> float:
+    def vanilla_ngram_prob(self, n_gram_type:NGramType, word, prev_words:NGram) -> float:
         n_gram = tuple(prev_words + (word,))
 
         # unigram
-        if NGramType == NGramType.UNIGRAM:
+        if n_gram_type == n_gram_type.UNIGRAM:
             total_unigrams = sum(self.ngrams[0].values())
             if total_unigrams == 0:
                 return 0.0
@@ -52,29 +52,40 @@ class Model(ABC):
 
         # High order n-grams (2+)
         n_minus_1_gram = tuple(prev_words)
-        n_model =  self.ngrams[NGramType.value]
-        n_minus_1_model = self.ngrams[NGramType.value-1]
+        n_model =  self.ngrams[n_gram_type.value]
+        n_minus_1_model = self.ngrams[n_gram_type.value-1]
 
         if (n_minus_1_gram not in n_minus_1_model) or (n_minus_1_model[n_minus_1_gram] == 0): return 0
 
         return n_model[n_gram] / n_minus_1_model[n_minus_1_gram]
 
 
-    def calc_sentence_prob(self, sentence:Sentence, model_type:NGramType, prob_func):
+    def calc_sentence_prob(self, sentence:Sentence, n_gram_type:NGramType, prob_func) -> float:
         #P(w1, w2, ..., wn) = P(wi| wn-t,wn-t)
+        log_prob = 0.0
 
-        word_prob = prob_func()
+        for i in range(n_gram_type.value, len(sentence)):
+            word = sentence[i]
+            prev_words = tuple(sentence[i-n_gram_type.value:i])
+            word_prob = prob_func(n_gram_type, word, prev_words)
 
+            if word_prob > 0:
+                log_prob += math.log(word_prob)
+            else:
+                log_prob += -float('inf')
+        
+        return log_prob
+    
 
-        match model_type:
-            case NGramType.UNIGRAM:
-                pass
-            case NGramType.BIGRAM:
-                pass
-            case NGramType.TRIGRAM:
-                pass
-
-        #= P(w1|<s>) * P(w2|<s>,w1) * P(w3|w1,w2) * ... * P(wn|wn-2,wn-1)
+    #TODO IDK #Until model has a window of its n, a lower order n is used
+    def interpolation_logic(self):
+        """
+        for i in range(1, len(sentence)):
+            n = min(i, model_type.value)
+            word = sentence[i]
+            #TODO NOTE possible bug when (i-n) is less than 0 but i dont think its possible. IM pretty sure its yapping hard
+            prev_words = sentence[i-n:i]
+            """
 
     def calc_perplexity(self):
         pass

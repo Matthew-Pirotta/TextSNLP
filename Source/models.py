@@ -2,6 +2,9 @@ from collections import Counter
 from enum import StrEnum, IntEnum
 import math
 import random
+import pickle
+import os
+
 
 random.seed(71)
 
@@ -22,9 +25,7 @@ __all__ = [ "NGramType", "LanguageModel", "Model"]
 
 class Model():
     #NOTE todo pass var for upperbound of n-grams)
-    #TODO remove name
-    def __init__(self, name: str, model_type: LanguageModel):
-        self.name = name
+    def __init__(self, model_type: LanguageModel):
         self.ngrams:list[Counter] = [Counter(), Counter(), Counter()]
         self.model_type = model_type
         self.prob_func = self.get_prob_function(model_type)
@@ -36,7 +37,7 @@ class Model():
 
     
     def train(self, train_sentences:Sentences):
-        print(f"Training {self.name} model...")
+        print(f"Training {self.model_type} model...")
 
         #Reset
         for ngram in self.ngrams:
@@ -173,8 +174,6 @@ class Model():
         }
 
         return mapping[model_type]
-    
-
             
     def generate_next_word(self, sentence:Sentence, n_gram_type:NGramType) -> str:
         # Randomly choose a word if no context is available
@@ -218,3 +217,16 @@ class Model():
             final_sentence.append(generated_word)
 
         return " ".join(final_sentence[1:-1])
+    
+    def save_model(self, folder_path:str):
+        os.makedirs(os.path.dirname(folder_path), exist_ok=True)
+
+        fileDir = f"{folder_path}/{self.model_type}"
+        with open(fileDir, 'wb') as f:
+            pickle.dump(self, f)
+    
+    @classmethod
+    def load(cls, filepath: str):
+        with open(filepath, 'rb') as f:
+            model = pickle.load(f)
+        return model

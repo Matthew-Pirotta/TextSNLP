@@ -60,8 +60,8 @@ class PreProcessing:
         corpusDir = "Corpus"
 
         if not files: 
-            #Biggest files ordered - "malti04.administration.085.vrt", 
-            files = ["malti04.web.vrt", "malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
+            #Biggest files ordered - "malti04.administration.085.vrt", "malti04.web.vrt"
+            files = ["malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
 
 
         corpus = []

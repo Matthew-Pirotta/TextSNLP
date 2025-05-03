@@ -125,7 +125,7 @@ class Model():
 
         return total_prob
 
-    def _calc_n_gram_sent_prob(self, sentence:Sentence, n_gram_type:NGramType) -> float:
+    def calc_sen_probability(self, sentence:Sentence, n_gram_type:NGramType) -> float:
         #P(w1, w2, ..., wn) = P(wi| wn-t,wn-t)
         log_prob = 0.0
 
@@ -155,7 +155,7 @@ class Model():
         total_words = 0
 
         for sentence in test_sentences:
-            total_log_prob += self._calc_n_gram_sent_prob(sentence, n_gram_type)
+            total_log_prob += self.calc_sen_probability(sentence, n_gram_type)
             total_words += len(sentence)
         
         if total_words == 0:
@@ -198,6 +198,7 @@ class Model():
         # Return end-of-sentence token if no valid words are found,
         # a randomly generated word would not make sense in the context of the sentence
         if not words:
+          print("No valid words were found to be generated")
           return "</s>"  
 
         chosen_word = random.choices(words, weights, k=1)[0]
@@ -216,4 +217,4 @@ class Model():
             generated_word = self.generate_next_word(final_sentence, n_gram_type)
             final_sentence.append(generated_word)
 
-        return "".join(final_sentence[1:-1])     
+        return " ".join(final_sentence[1:-1])

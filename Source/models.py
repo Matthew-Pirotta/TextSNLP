@@ -37,7 +37,7 @@ class Model():
 
     
     def train(self, train_sentences:Sentences):
-        print(f"Training {self.model_type} model...")
+        #print(f"Training {self.model_type} model...")
 
         #Reset
         for ngram in self.ngrams:
@@ -69,7 +69,7 @@ class Model():
         for i, ngram in enumerate(self.ngrams):
             self.total_tokens[i] = sum(ngram.values())
 
-        print(f"Model trained with {len(self.vocabulary)} unique words and {self.total_tokens} total tokens")
+        print(f"{self.model_type} trained with {len(self.vocabulary)} unique words and {self.total_tokens} total tokens")
 
     def vanilla_ngram_prob(self, n_gram_type:NGramType, word, prev_words:NGram) -> float:
         n_gram = tuple(prev_words + (word,))

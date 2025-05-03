@@ -70,23 +70,23 @@ def user_sentence() -> str:
 
 if __name__ == '__main__':
 
+    language_model = user_select_model()
     is_training = user_train_or_load()
-
-    if is_training:
-        language_model = user_select_model()
-        model = Model(language_model)
-    else:
-        model = Model.load(models_path)
+    model = Model(language_model) if is_training else Model.load(f"{models_path}/{language_model}")        
 
     start_sentence = user_sentence() 
 
     start_time = time.time()  # Record the start time
+
+    corpus = PreProcessing.readSample()
+    train_sentences, test_sentences = PreProcessing.train_test_split(corpus, train_ratio=.8)
+
+    model.train(train_sentences)
     
     generated_sentence = model.generate_sentence(start_sentence, NGramType.BIGRAM)
     print(f"start_sentence: {start_sentence}\nfull generated sentence: {generated_sentence}")
     
-    corpus = PreProcessing.readSample()
-    train_sentences, test_sentences = PreProcessing.train_test_split(corpus, train_ratio=.8)
+    
 
     df = generate_perplexity_table(train_sentences, test_sentences)
     print(df)

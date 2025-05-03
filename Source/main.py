@@ -2,9 +2,11 @@ from pre_processing import *
 from models import *
 
 import time
-import pandas as pd
 import os
+import pandas as pd
+import cProfile, pstats
 
+profile_dir = "./Stats"
 models_path = "./Models"
 
 def generate_perplexity_table(train_sentences, test_sentences) -> pd.DataFrame:
@@ -22,9 +24,6 @@ def generate_perplexity_table(train_sentences, test_sentences) -> pd.DataFrame:
             df.at[model_type.value, ngram.name] = round(perplexity, 4)
     
     return df
-
-def user_interaction():
-    pass
 
 #TODO Just say chatgpt
 def user_select_model() -> LanguageModel:
@@ -66,30 +65,63 @@ def user_sentence() -> str:
     start_sentence = input("Phrase: ")
     return start_sentence
 
-
-
-if __name__ == '__main__':
-
+def user_interaction():
     language_model = user_select_model()
     is_training = user_train_or_load()
+    start_sentence = user_sentence()
+    
+    return language_model, is_training, start_sentence
+
+def main_logic_without_user_input(language_model, is_training, start_sentence):
     model = Model(language_model) if is_training else Model.load(f"{models_path}/{language_model}")        
-
-    start_sentence = user_sentence() 
-
-    start_time = time.time()  # Record the start time
-
+    
     corpus = PreProcessing.readSample()
     train_sentences, test_sentences = PreProcessing.train_test_split(corpus, train_ratio=.8)
-
     model.train(train_sentences)
-    
+   
     generated_sentence = model.generate_sentence(start_sentence, NGramType.BIGRAM)
     print(f"start_sentence: {start_sentence}\nfull generated sentence: {generated_sentence}")
     
-    
-
     df = generate_perplexity_table(train_sentences, test_sentences)
     print(df)
 
-    end_time = time.time()  # Record the end time
-    print(f"Execution time: {end_time - start_time:.2f} seconds")
+    # Save the DataFrame to a CSV file
+    output_file = os.path.join(models_path, f"perplexity_table.csv")
+    df.to_csv(output_file, index=True)
+    print(f"Perplexity table saved to {output_file}")
+    
+    return df
+
+def profileTime():
+    os.makedirs(profile_dir, exist_ok=True)
+    profile_file = os.path.join(profile_dir, "timeResults.cprof")
+    time_sorted_file = os.path.join(profile_dir, "timeProfiling_sorted_by_time.txt")
+    cumtime_sorted_file = os.path.join(profile_dir, "timeProfiling_sorted_by_cumtime.txt")
+   
+    language_model, is_training, start_sentence = user_interaction()
+    
+    with cProfile.Profile() as profile:
+        main_logic_without_user_input(language_model, is_training, start_sentence)
+        
+    stats = pstats.Stats(profile)
+    stats.dump_stats(profile_file)
+   
+    # Generate a file sorted by time
+    with open(time_sorted_file, "w") as f:
+        stats = pstats.Stats(profile_file, stream=f)
+        stats.strip_dirs()  # Remove file path prefixes for better readability          
+        stats.sort_stats(pstats.SortKey.TIME)
+        stats.print_stats()
+   
+    # Generate a file sorted by cumulative time
+    with open(cumtime_sorted_file, "w") as f:
+        stats = pstats.Stats(profile_file, stream=f)
+        stats.strip_dirs()  # Remove file path prefixes for better readability          
+        stats.sort_stats(pstats.SortKey.CUMULATIVE)
+        stats.print_stats()
+   
+    print(f"Profiling results saved to:\n- {time_sorted_file} (sorted by time)\n- {cumtime_sorted_file} (sorted by cumulative time)")
+
+if __name__ == '__main__':
+    profileTime()
+    print("done")

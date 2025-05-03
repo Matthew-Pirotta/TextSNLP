@@ -29,10 +29,13 @@ if __name__ == '__main__':
             processed_test = test_sentences
         
         for ngram in NGramType:
-            perplexity = model.calc_perplexity(processed_test, ngram, model.get_prob_function(model_type))
+            perplexity = model.calc_perplexity(processed_test, ngram)
             df.at[model_type.value, ngram.name] = round(perplexity, 4)
 
     print(df)
+
+    text = model.generate_sentence("Jien jisimni", NGramType.BIGRAM)
+    print(f"text- {text}")
 
     end_time = time.time()  # Record the end time
     print(f"Execution time: {end_time - start_time:.2f} seconds")

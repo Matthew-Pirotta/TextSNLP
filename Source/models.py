@@ -1,6 +1,9 @@
 from collections import Counter
 from enum import StrEnum, IntEnum
 import math
+import random
+
+random.seed(71)
 
 from pre_processing import *
 
@@ -24,7 +27,9 @@ class Model():
         self.name = name
         self.ngrams:list[Counter] = [Counter(), Counter(), Counter()]
         self.model_type = model_type
+        self.prob_func = self.get_prob_function(model_type)
         self.vocabulary = set()
+
         self.total_tokens:list[int] = [0] * len(self.ngrams)
         self.lambdas:list[float] = [0.1, 0.3, 0.6]
         self.rare_threshold = 1000 #TODO set a proper value
@@ -107,7 +112,7 @@ class Model():
         prev_words = tuple(w if w in self.vocabulary else "<UNK>" for w in prev_words)
         return self.vanilla_ngram_prob(n_gram_type, word, prev_words)
 
-    def _interpolation_prob(self, word, prev_words:NGram, prob_func) -> float:
+    def _interpolation_prob(self, word, prev_words:NGram) -> float:
         """lambdas - [unigram, bigram, trigram, ...]"""
         highest_n = 1 + len(prev_words)
 
@@ -115,12 +120,12 @@ class Model():
         for i in range(highest_n):
             n_gram_type = NGramType(i)
             context = prev_words[-i:] if i > 0 else ()  # last i words
-            prob = prob_func(n_gram_type, word, context)
+            prob = self.prob_func(n_gram_type, word, context)
             total_prob += self.lambdas[i] * prob
 
         return total_prob
 
-    def _calc_n_gram_sent_prob(self, sentence:Sentence, n_gram_type:NGramType, prob_func) -> float:
+    def _calc_n_gram_sent_prob(self, sentence:Sentence, n_gram_type:NGramType) -> float:
         #P(w1, w2, ..., wn) = P(wi| wn-t,wn-t)
         log_prob = 0.0
 
@@ -132,10 +137,10 @@ class Model():
             if n_gram_type == NGramType.INTERPOLATION:
                 # Use full context up to trigram (2 previous words)
                 prev_words = tuple(sentence[max(0, i - 2):i])
-                word_prob = self._interpolation_prob(word, prev_words, prob_func)
+                word_prob = self._interpolation_prob(word, prev_words)
             else:
                 prev_words = tuple(sentence[i-n_gram_type:i])
-                word_prob = prob_func(n_gram_type, word, prev_words)
+                word_prob = self.prob_func(n_gram_type, word, prev_words)
 
             if word_prob > 0:
                 log_prob += math.log(word_prob)
@@ -145,12 +150,12 @@ class Model():
         
         return log_prob
 
-    def calc_perplexity(self, test_sentences:Sentences, n_gram_type:NGramType, prob_func) -> float:
+    def calc_perplexity(self, test_sentences:Sentences, n_gram_type:NGramType) -> float:
         total_log_prob = 0.0
         total_words = 0
 
         for sentence in test_sentences:
-            total_log_prob += self._calc_n_gram_sent_prob(sentence, n_gram_type, prob_func)
+            total_log_prob += self._calc_n_gram_sent_prob(sentence, n_gram_type)
             total_words += len(sentence)
         
         if total_words == 0:
@@ -168,3 +173,47 @@ class Model():
         }
 
         return mapping[model_type]
+    
+
+            
+    def generate_next_word(self, sentence:Sentence, n_gram_type:NGramType) -> str:
+        # Randomly choose a word if no context is available
+        if not sentence:
+            return random.choice(list(self.vocabulary))  
+
+        words:list[str] = []
+        weights:list[float] = []
+
+        window_previous_words = max(0, n_gram_type - 1)
+        prev_words = tuple(sentence[-window_previous_words:])
+        for word in self.vocabulary:
+            #Start token should not be generated
+            if word == "<s>": continue
+
+            prob = self.prob_func(n_gram_type, word, prev_words)
+            if prob <= 0: continue 
+            words.append(word)
+            weights.append(prob)
+
+        # Return end-of-sentence token if no valid words are found,
+        # a randomly generated word would not make sense in the context of the sentence
+        if not words:
+          return "</s>"  
+
+        chosen_word = random.choices(words, weights, k=1)[0]
+        return chosen_word
+
+    def generate_sentence(self, start_of_sentence:str, n_gram_type:NGramType, max_length:int = 22) -> str:
+        #Pre process sentence into expected shape
+        processed_start_of_sentence = ["<s>"] + start_of_sentence.split()
+
+        if self.model_type == LanguageModel.UNK:
+            processed_start_of_sentence = [w if w in self.vocabulary else "<UNK>" for w in processed_start_of_sentence]
+
+        final_sentence:list[str] = processed_start_of_sentence[:]
+        generated_word = ""
+        while (len(final_sentence) < max_length) and not generated_word == "</s>": #sentence ends in </s>:
+            generated_word = self.generate_next_word(final_sentence, n_gram_type)
+            final_sentence.append(generated_word)
+
+        return "".join(final_sentence[1:-1])     

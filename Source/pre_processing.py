@@ -13,8 +13,6 @@ __all__ = ["Sentence", "Sentences", "NGram", "NGrams", "PreProcessing"]
 random.seed(71)
 
 class PreProcessing:
-
-    #TODO NOTE some sort of filtering? all lower case?
     @staticmethod
     def _extract_sentences(filePath: str) -> Sentences:
         with open(filePath, "r", encoding="utf-8") as file:
@@ -29,7 +27,7 @@ class PreProcessing:
                 if line.strip():
                     parts = line.strip().split("\t")
                     if len(parts) > 0:
-                        words.append(parts[0])
+                        words.append(parts[0].lower())
             sentences.append(words)
 
             if words:
@@ -62,7 +60,8 @@ class PreProcessing:
         corpusDir = "Corpus"
 
         if not files: 
-            files = ["malti04.administration.085.vrt", "malti04.web.vrt", "malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
+            #Biggest file - "malti04.administration.085.vrt"
+            files = ["malti04.web.vrt", "malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
 
 
         corpus = []

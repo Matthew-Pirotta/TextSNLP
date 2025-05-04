@@ -88,7 +88,9 @@ class Model():
         n_model =  self.ngrams[n_gram_type]
         n_minus_1_model = self.ngrams[n_gram_type-1]
 
-        if (n_minus_1_gram not in n_minus_1_model) or (n_minus_1_model[n_minus_1_gram] == 0): return 0
+        is_missing_n_minus_1gram = n_minus_1_gram not in n_minus_1_model
+        is_zero_count = n_minus_1_model[n_minus_1_gram] == 0
+        if is_missing_n_minus_1gram or is_zero_count: return 0
 
         return n_model[n_gram] / n_minus_1_model[n_minus_1_gram]
     
@@ -121,11 +123,11 @@ class Model():
         highest_n = 1 + len(prev_words)
 
         total_prob = 0
-        for i in range(highest_n):
-            n_gram_type = NGramType(i)
-            context = prev_words[-i:] if i > 0 else ()  # last i words
+        for n in range(highest_n):
+            n_gram_type = NGramType(n)
+            context = prev_words[-n:] if n > 0 else ()  # last i words
             prob = self.prob_func(n_gram_type, word, context)
-            total_prob += self.lambdas[i] * prob
+            total_prob += self.lambdas[n] * prob
 
         return total_prob
 
@@ -133,25 +135,28 @@ class Model():
         #P(w1, w2, ..., wn) = P(wi| wn-t,wn-t)
         log_prob = 0.0
 
-        start_index = 1 if n_gram_type == NGramType.INTERPOLATION else n_gram_type 
+        
+        if n_gram_type == NGramType.INTERPOLATION:
+            context = max(NGramType) 
+        else:
+            context = n_gram_type
 
-        for i in range(start_index, len(sentence)):
+        for i in range(context, len(sentence)):
             word = sentence[i]
+            prev_words = tuple(sentence[i - context:i])
+
 
             if n_gram_type == NGramType.INTERPOLATION:
-                # Use full context up to trigram (2 previous words)
-                prev_words = tuple(sentence[max(0, i - 2):i])
                 word_prob = self._interpolation_prob(word, prev_words)
             else:
-                prev_words = tuple(sentence[i-n_gram_type:i])
                 word_prob = self.prob_func(n_gram_type, word, prev_words)
 
-            if word_prob > 0:
-                log_prob += math.log(word_prob)
-            else:
-                log_prob += math.log(1e-10)  # Assign a small probability to unseen n-grams
+            # Return immediately if probability is zero
+            if word_prob <= 0:
+                return float('-inf')  
+            
+            log_prob += math.log(word_prob)
 
-        
         return log_prob
 
     def calc_perplexity(self, test_sentences:Sentences, n_gram_type:NGramType) -> float:
@@ -186,7 +191,11 @@ class Model():
         words:list[str] = []
         weights:list[float] = []
 
-        window_previous_words = max(0, n_gram_type - 1)
+        if n_gram_type == NGramType.INTERPOLATION:
+            window_previous_words = max(0, max(NGramType) - 1)
+        else:
+            window_previous_words = max(0, n_gram_type - 1)
+
         prev_words = tuple(sentence[-window_previous_words:])
         for word in self.vocabulary:
             #Start token should not be generated
@@ -233,7 +242,6 @@ class Model():
         with open(filepath, 'rb') as f:
             model = pickle.load(f)
         return model
-
 
     def print_memory_usage(self):
         def bytes_to_mb(bytes_val: int) -> float:

@@ -4,6 +4,9 @@ from models import *
 import sys
 import os
 import pandas as pd
+import gc  # Import garbage collector
+from pympler import asizeof
+
 
 import cProfile, pstats
 
@@ -23,6 +26,10 @@ def generate_perplexity_table(train_sentences, test_sentences) -> pd.DataFrame:
         for ngram in NGramType:
             perplexity = model.calc_perplexity(test_sentences, ngram)
             df.at[model_type.value, ngram.name] = round(perplexity, 4)
+        
+        # Explicitly delete the model and run garbage collection
+        del model
+        gc.collect()
         
     return df
 
@@ -77,9 +84,12 @@ def main_logic_without_user_input(language_model, is_training, start_sentence):
     model = Model(language_model) if is_training else Model.load(f"{models_path}/{language_model}")        
     
     corpus = PreProcessing.readSample()
+
+    # Total memory of the Model instance (including all referenced objects)
+    corpus_print_memory_usage(corpus)
+    
     train_sentences, test_sentences = PreProcessing.train_test_split(corpus, train_ratio=.8)
     model.train(train_sentences)
-
 
     model.print_memory_usage()
    
@@ -95,6 +105,11 @@ def main_logic_without_user_input(language_model, is_training, start_sentence):
     print(f"Perplexity table saved to {output_file}")
     
     return df
+
+def corpus_print_memory_usage(corpus):
+    total_memory_bytes = asizeof.asizeof(corpus)
+    total_memory_mb = total_memory_bytes / (1024 * 1024)
+    print(f"Total memory used by Corpus: {total_memory_mb:.2f} MB")
 
 def profileTime():
     os.makedirs(profile_dir, exist_ok=True)
@@ -127,8 +142,10 @@ def profileTime():
     print(f"Profiling results saved to:\n- {time_sorted_file} (sorted by time)\n- {cumtime_sorted_file} (sorted by cumulative time)")
 
 if __name__ == '__main__':
-    #profileTime()
+    profileTime()
 
-    language_model, is_training, start_sentence = user_interaction()
-    main_logic_without_user_input(language_model, is_training, start_sentence)
+    #Uncomment this and comment above to not profile time
+    #language_model, is_training, start_sentence = user_interaction()
+    #main_logic_without_user_input(language_model, is_training, start_sentence)
+
     print("done")

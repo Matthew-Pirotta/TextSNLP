@@ -60,8 +60,8 @@ class PreProcessing:
         corpusDir = "Corpus"
 
         if not files: 
-            #Biggest files ordered - "malti04.administration.085.vrt", "malti04.web.vrt",
-            files = ["malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
+            #Biggest files ordered - 
+            files = ["malti04.administration.085.vrt", "malti04.web.vrt", "malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
 
 
         corpus = []
@@ -83,12 +83,15 @@ class PreProcessing:
         train_sentences = sentences[:split_index]
         test_sentences = sentences[split_index:]
 
+        def bytes_to_mb(bytes_val: int) -> float:
+            return bytes_val / (1024 * 1024)
+
         print(f"Split corpus: {len(train_sentences)} training sentences, {len(test_sentences)} testing sentences")
 
         return train_sentences, test_sentences
     
     @staticmethod
-    def generate_n_grams(sentence:Sentence,n:int) -> NGrams:
+    def generate_n_grams(sentence:Sentence, n:int) -> NGrams:
         n_grams = []
         upperbound = len(sentence) - n
         for i in range(upperbound+1):

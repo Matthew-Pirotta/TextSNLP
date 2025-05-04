@@ -36,9 +36,8 @@ class Model():
 
         self.total_tokens:list[int] = [0] * len(self.ngrams)
         self.lambdas:list[float] = [0.1, 0.3, 0.6]
-        self.rare_threshold = 1000 #TODO set a proper value
+        self.proportion = .1 #TODO set a proper value
 
-    
     def train(self, train_sentences:Sentences):
         #print(f"Training {self.model_type} model...")
 
@@ -50,7 +49,9 @@ class Model():
         #Replace Rare words with UNK if model selected
         if self.model_type == LanguageModel.UNK:
             word_counts = Counter(word for sentence in train_sentences for word in sentence)
-            rare_words = set(word for word, count in word_counts.items() if count <= self.rare_threshold)
+            total_words = sum(word_counts.values())
+            threshold = total_words * self.proportion
+            rare_words = set(word for word, count in word_counts.items() if count <= threshold)
 
             processed_sentences = [
                 [word if word not in rare_words else "<UNK>" for word in sentence]

@@ -1,3 +1,7 @@
 - Reading the corpus was tested by reading a single file, and printing the first 2 sentences
 - ngram was tested by performing 1,2,3 grams on the aforementioned second sentence
 - tested ngram 1,2,3 on sample corpus
+
+
+
+print(f"Memory of {model_type} - {sys.getsizeof(model)}")    

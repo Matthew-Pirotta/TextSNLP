@@ -1,9 +1,10 @@
 from pre_processing import *
 from models import *
 
-import time
+import sys
 import os
 import pandas as pd
+
 import cProfile, pstats
 
 profile_dir = "./Stats"
@@ -22,7 +23,7 @@ def generate_perplexity_table(train_sentences, test_sentences) -> pd.DataFrame:
         for ngram in NGramType:
             perplexity = model.calc_perplexity(test_sentences, ngram)
             df.at[model_type.value, ngram.name] = round(perplexity, 4)
-    
+        
     return df
 
 #TODO Just say chatgpt
@@ -78,6 +79,9 @@ def main_logic_without_user_input(language_model, is_training, start_sentence):
     corpus = PreProcessing.readSample()
     train_sentences, test_sentences = PreProcessing.train_test_split(corpus, train_ratio=.8)
     model.train(train_sentences)
+
+
+    model.print_memory_usage()
    
     generated_sentence = model.generate_sentence(start_sentence, NGramType.BIGRAM)
     print(f"start_sentence: {start_sentence}\nfull generated sentence: {generated_sentence}")
@@ -123,5 +127,8 @@ def profileTime():
     print(f"Profiling results saved to:\n- {time_sorted_file} (sorted by time)\n- {cumtime_sorted_file} (sorted by cumulative time)")
 
 if __name__ == '__main__':
-    profileTime()
+    #profileTime()
+
+    language_model, is_training, start_sentence = user_interaction()
+    main_logic_without_user_input(language_model, is_training, start_sentence)
     print("done")

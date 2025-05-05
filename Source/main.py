@@ -5,7 +5,7 @@ import sys
 import os
 import random
 import pandas as pd
-import gc  # Import garbage collector
+import gc
 from pympler import asizeof
 from collections import Counter
 
@@ -118,7 +118,6 @@ def main_logic_without_user_input(language_model, is_training, start_sentence):
     sentence_prob_df.to_csv(output_file, index=True)
     print(f"Sentence probability table saved to {output_file}")
 
-
 def corpus_print_memory_usage(corpus):
     total_memory_bytes = asizeof.asizeof(corpus)
     total_memory_mb = total_memory_bytes / (1024 * 1024)
@@ -126,10 +125,7 @@ def corpus_print_memory_usage(corpus):
 
 def profileTime():
     os.makedirs(profile_dir, exist_ok=True)
-    profile_file = os.path.join(profile_dir, "timeResults.cprof")
-    time_sorted_file = os.path.join(profile_dir, "timeProfiling_sorted_by_time.txt")
-    cumtime_sorted_file = os.path.join(profile_dir, "timeProfiling_sorted_by_cumtime.txt")
-   
+    profile_file = os.path.join(profile_dir, "timeResults.cprof")   
     language_model, is_training, start_sentence = user_interaction()
     
     with cProfile.Profile() as profile:
@@ -138,21 +134,7 @@ def profileTime():
     stats = pstats.Stats(profile)
     stats.dump_stats(profile_file)
    
-    # Generate a file sorted by time
-    with open(time_sorted_file, "w") as f:
-        stats = pstats.Stats(profile_file, stream=f)
-        stats.strip_dirs()  # Remove file path prefixes for better readability          
-        stats.sort_stats(pstats.SortKey.TIME)
-        stats.print_stats()
-   
-    # Generate a file sorted by cumulative time
-    with open(cumtime_sorted_file, "w") as f:
-        stats = pstats.Stats(profile_file, stream=f)
-        stats.strip_dirs()  # Remove file path prefixes for better readability          
-        stats.sort_stats(pstats.SortKey.CUMULATIVE)
-        stats.print_stats()
-   
-    print(f"Profiling results saved to:\n- {time_sorted_file} (sorted by time)\n- {cumtime_sorted_file} (sorted by cumulative time)")
+    print(f"Profiling results saved to: {profile_file} \n run:'snakeviz Stats/timeResults.cprof'")
 
 if __name__ == '__main__':
     profileTime()

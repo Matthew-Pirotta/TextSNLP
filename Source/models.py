@@ -278,7 +278,6 @@ class Model():
         total_memory_mb = bytes_to_mb(total_memory_bytes)
         print(f"Total memory used by Model (including referenced objects): {total_memory_mb:.2f} MB")
 
-
         ngrams_memory_bytes = asizeof.asizeof(self.ngrams)
         ngrams_memory_mb = bytes_to_mb(ngrams_memory_bytes)
         print(f"Memory of ngrams (including elements): {ngrams_memory_mb:.2f} MB")

@@ -5,9 +5,9 @@ import math
 import sys
 import random
 import pickle
+import json
 import os
 from pympler import asizeof
-
 
 random.seed(71)
 
@@ -35,8 +35,8 @@ class Model():
         self.vocabulary = set()
 
         self.total_tokens:list[int] = [0] * len(self.ngrams)
-        self.lambdas:list[float] = [0.1, 0.3, 0.6]
-        self.proportion = .1 #TODO set a proper value
+        self.lambdas:list[float] = [0.1, 0.3, 0.6] #Unigram, Bigram, Trigram
+        self.proportion = 0.000001  #TODO set a proper value
 
     def train(self, train_sentences:Sentences):
         #print(f"Training {self.model_type} model...")
@@ -51,6 +51,7 @@ class Model():
             word_counts = Counter(word for sentence in train_sentences for word in sentence)
             total_words = sum(word_counts.values())
             threshold = total_words * self.proportion
+            print(f"Rare threshold is {threshold}")
             rare_words = set(word for word, count in word_counts.items() if count <= threshold)
 
             processed_sentences = [
@@ -136,7 +137,6 @@ class Model():
         #P(w1, w2, ..., wn) = P(wi| wn-t,wn-t)
         log_prob = 0.0
 
-        
         if n_gram_type == NGramType.INTERPOLATION:
             context = max(NGramType) 
         else:
@@ -231,17 +231,45 @@ class Model():
 
         return " ".join(final_sentence[1:-1])
     
-    def save_model(self, folder_path:str):
-        os.makedirs(os.path.dirname(folder_path), exist_ok=True)
 
-        fileDir = f"{folder_path}/{self.model_type}"
-        with open(fileDir, 'wb') as f:
-            pickle.dump(self, f)
-    
+    def save_model(self, folder_path: str):
+        os.makedirs(folder_path, exist_ok=True)
+        file_path = os.path.join(folder_path, f"{self.model_type}.json")
+
+        readable_model = {
+            "model_type": self.model_type,
+            "vocabulary": sorted(self.vocabulary),
+            "total_tokens": self.total_tokens,
+            "lambdas": self.lambdas,
+            "ngrams": [
+                { " ".join(k): v for k, v in ngram.most_common()}
+                for ngram in self.ngrams
+            ]
+        }
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(readable_model, f, indent=2, ensure_ascii=False)
+
     @classmethod
     def load(cls, filepath: str):
-        with open(filepath, 'rb') as f:
-            model = pickle.load(f)
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        model_type = LanguageModel(data["model_type"])
+        model = cls(model_type)
+
+        model.vocabulary = set(data["vocabulary"])
+        model.total_tokens = data["total_tokens"]
+        model.lambdas = data["lambdas"]
+
+        # Reconstruct n-grams as Counters with tuple keys
+        model.ngrams = [
+            Counter({tuple(k.split()): v for k, v in ngram_dict.items()})
+            for ngram_dict in data["ngrams"]
+        ]
+
+        model.prob_func = model.get_prob_function(model_type)
+
         return model
 
     def print_memory_usage(self):

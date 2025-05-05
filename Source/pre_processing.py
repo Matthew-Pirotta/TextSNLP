@@ -61,8 +61,10 @@ class PreProcessing:
 
         if not files: 
             #Biggest files ordered - 
-            files = ["malti04.administration.085.vrt", "malti04.web.vrt", "malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
+            #files = ["malti04.administration.085.vrt", "malti04.web.vrt", "malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
 
+            #Biggest 3 files from each section
+            files = ['malti04.law.058.vrt', 'malti04.law.057.vrt', 'malti04.law.060.vrt', 'malti04.parliament.008.vrt', 'malti04.parliament.009.vrt', 'malti04.parliament.007.vrt', 'malti04.press.001.vrt', 'malti04.press.105.vrt', 'malti04.press.007.vrt', 'malti04.speeches.vrt', 'malti04.web.vrt', 'malti04.wiki.008.vrt', 'malti04.wiki.001.vrt', 'malti04.wiki.010.vrt']
 
         corpus = []
         

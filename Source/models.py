@@ -36,7 +36,7 @@ class Model():
 
         self.total_tokens:list[int] = [0] * len(self.ngrams)
         self.lambdas:list[float] = [0.1, 0.3, 0.6] #Unigram, Bigram, Trigram
-        self.proportion = 0.000001  #TODO set a proper value
+        self.threshold = 2
 
     def train(self, train_sentences:Sentences):
         #print(f"Training {self.model_type} model...")
@@ -49,10 +49,7 @@ class Model():
         #Replace Rare words with UNK if model selected
         if self.model_type == LanguageModel.UNK:
             word_counts = Counter(word for sentence in train_sentences for word in sentence)
-            total_words = sum(word_counts.values())
-            threshold = total_words * self.proportion
-            print(f"Rare threshold is {threshold}")
-            rare_words = set(word for word, count in word_counts.items() if count <= threshold)
+            rare_words = set(word for word, count in word_counts.items() if count <= self.threshold)
 
             processed_sentences = [
                 [word if word not in rare_words else "<UNK>" for word in sentence]
@@ -118,7 +115,7 @@ class Model():
     def unk_ngram_prob(self, n_gram_type:NGramType, word, prev_words:NGram) -> float:
         word = word if word in self.vocabulary else "<UNK>"
         prev_words = tuple(w if w in self.vocabulary else "<UNK>" for w in prev_words)
-        return self.vanilla_ngram_prob(n_gram_type, word, prev_words)
+        return self.laplace_ngram_prob(n_gram_type, word, prev_words)
 
     def _interpolation_prob(self, word, prev_words:NGram) -> float:
         """lambdas - [unigram, bigram, trigram, ...]"""

@@ -139,7 +139,6 @@ def test_laplace_ngram_prob():
 
 def test_unk_ngram_prob():
     model = Model(LanguageModel.UNK)
-    model.proportion = 0.5  # Set a high proportion to ensure some words are replaced with <UNK>
 
     train_sentences = [
         ["<s>", "the", "cat", "sat", "</s>"],

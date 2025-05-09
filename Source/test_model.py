@@ -153,9 +153,8 @@ def test_unk_ngram_prob():
     sentence = ["<s>", "the", "cat", "barked", "</s>"]
     log_prob = model.calc_sen_probability(sentence, NGramType.UNIGRAM)
 
-    # Ensure the log probability is valid (negative)
     assert log_prob <= 0
 
     # Check that <UNK> is used in place of "barked"
     unk_prob = model.unk_ngram_prob(NGramType.UNIGRAM, "barked", ())
-    assert unk_prob > 0  # Probability for <UNK> should be valid
+    assert unk_prob > 0 

@@ -99,9 +99,7 @@ def user_interaction():
     
     return language_model, is_training, start_sentence
 
-def main_logic_without_user_input(language_model, is_training, start_sentence):
-    #model = Model(language_model) if is_training else Model.load(f"{models_path}/{language_model}.json")        
-    
+def main_logic_without_user_input(language_model, is_training, start_sentence):    
     corpus = PreProcessing.readSample()
 
     # Total memory of the corpus
@@ -141,6 +139,11 @@ def profileTime():
     os.makedirs(profile_dir, exist_ok=True)
     profile_file = os.path.join(profile_dir, "timeResults.cprof")   
     language_model, is_training, start_sentence = user_interaction()
+
+    model = Model(language_model) if is_training else Model.load(f"{models_path}/{language_model}.json")        
+    generated_sentence = model.generate_sentence(start_sentence, NGramType.INTERPOLATION)
+
+    print(f"start sentence: {start_sentence}\ngenerated sentence:{generated_sentence}")
     
     with cProfile.Profile() as profile:
         main_logic_without_user_input(language_model, is_training, start_sentence)

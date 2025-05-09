@@ -90,7 +90,7 @@ def user_interaction():
     return language_model, is_training, start_sentence
 
 def main_logic_without_user_input(language_model, is_training, start_sentence):
-    model = Model(language_model) if is_training else Model.load(f"{models_path}/{language_model}")        
+    model = Model(language_model) if is_training else Model.load(f"{models_path}/{language_model}.json")        
     
     corpus = PreProcessing.readSample()
 

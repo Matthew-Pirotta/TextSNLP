@@ -54,6 +54,37 @@ class PreProcessing:
         print(f"Total sentences in corpus: {len(corpus)}")
         return corpus
     
+    #NOTE CHATGPT
+    @staticmethod
+    def get_largest_files_by_category(corpus_dir, num_files=3):
+        # Dictionary to store files grouped by category
+        category_files = {}
+
+        # Iterate through all files in the corpus directory
+        for filename in os.listdir(corpus_dir):
+            if filename.endswith(".vrt"):
+                # Extract the category from the file name (e.g., "administration" from "malti04.administration.085.vrt")
+                parts = filename.split(".")
+                if len(parts) > 1:
+                    category = parts[1]
+                    file_path = os.path.join(corpus_dir, filename)
+                    file_size = os.path.getsize(file_path)
+
+                    # Add the file to the category
+                    if category not in category_files:
+                        category_files[category] = []
+                    category_files[category].append((filename, file_size))
+
+        # Select the largest files from each category
+        #print(category_files)
+        largest_files = []
+        for category, files in category_files.items():
+            # Sort files by size in descending order and pick the top `num_files`
+            files.sort(key=lambda x: x[1], reverse=True)
+            largest_files.extend([file[0] for file in files[:num_files]])
+
+        return largest_files
+    
     #Reading roughly 1.7GB of ?
     @staticmethod
     def readSample(files = None) -> Sentences:
@@ -63,8 +94,8 @@ class PreProcessing:
             #Biggest files ordered - 
             #files = ["malti04.administration.085.vrt", "malti04.web.vrt", "malti04.parliament.008.vrt", "malti04.parliament.009.vrt"]
 
-            #Biggest 3 files from each section
-            files = ['malti04.law.058.vrt', 'malti04.law.057.vrt', 'malti04.law.060.vrt', 'malti04.parliament.008.vrt', 'malti04.parliament.009.vrt', 'malti04.parliament.007.vrt', 'malti04.press.001.vrt', 'malti04.press.105.vrt', 'malti04.press.007.vrt', 'malti04.speeches.vrt', 'malti04.web.vrt', 'malti04.wiki.008.vrt', 'malti04.wiki.001.vrt', 'malti04.wiki.010.vrt']
+            #Biggest 4 files from each section
+            files = PreProcessing.get_largest_files_by_category(corpusDir, 10)
 
         corpus = []
         

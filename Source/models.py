@@ -273,16 +273,11 @@ class Model():
         def bytes_to_mb(bytes_val: int) -> float:
             return bytes_val / (1024 * 1024)
 
-        # Total memory of the Model instance (including all referenced objects)
-        total_memory_bytes = asizeof.asizeof(self)
-        total_memory_mb = bytes_to_mb(total_memory_bytes)
-        print(f"Total memory used by Model (including referenced objects): {total_memory_mb:.2f} MB")
-
         ngrams_memory_bytes = asizeof.asizeof(self.ngrams)
         ngrams_memory_mb = bytes_to_mb(ngrams_memory_bytes)
         print(f"Memory of ngrams (including elements): {ngrams_memory_mb:.2f} MB")
 
-        # Memory of each ngram (Counter object) and its elements
+        """# Memory of each ngram (Counter object) and its elements
         for i, ngram in enumerate(self.ngrams):
             ngram_memory_bytes = asizeof.asizeof(ngram)
             ngram_memory_mb = bytes_to_mb(ngram_memory_bytes)
@@ -291,4 +286,4 @@ class Model():
         # Memory of vocabulary (set object) and its elements
         vocab_memory_bytes = asizeof.asizeof(self.vocabulary)
         vocab_memory_mb = bytes_to_mb(vocab_memory_bytes)
-        print(f"Memory of vocabulary (including elements): {vocab_memory_mb:.2f} MB")
+        print(f"Memory of vocabulary (including elements): {vocab_memory_mb:.2f} MB")"""

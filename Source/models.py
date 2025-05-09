@@ -27,7 +27,6 @@ class LanguageModel(StrEnum):
 __all__ = [ "NGramType", "LanguageModel", "Model"]
 
 class Model():
-    #NOTE todo pass var for upperbound of n-grams)
     def __init__(self, model_type: LanguageModel):
         self.ngrams:list[Counter] = [Counter(), Counter(), Counter()]
         self.model_type = model_type

@@ -182,19 +182,19 @@ class Model():
         return mapping[model_type]
             
     def generate_next_word(self, sentence:Sentence, n_gram_type:NGramType) -> str:
-        # Randomly choose a word if no context is available
+        # Start the sentence with a random word if no context is provided
         if not sentence:
             return random.choice(list(self.vocabulary))  
 
+        if n_gram_type == NGramType.INTERPOLATION:
+            window = max(NGramType)
+        else:
+            window = n_gram_type
+
+        prev_words = tuple(sentence[-window:])
+
         words:list[str] = []
         weights:list[float] = []
-
-        if n_gram_type == NGramType.INTERPOLATION:
-            window_previous_words = max(0, max(NGramType) - 1)
-        else:
-            window_previous_words = max(0, n_gram_type - 1)
-
-        prev_words = tuple(sentence[-window_previous_words:])
         for word in self.vocabulary:
             #Start token should not be generated
             if word == "<s>": continue
@@ -215,6 +215,7 @@ class Model():
 
     def generate_sentence(self, start_of_sentence:str, n_gram_type:NGramType, max_length:int = 22) -> str:
         #Pre process sentence into expected shape
+        start_of_sentence = start_of_sentence.lower()
         processed_start_of_sentence = ["<s>"] + start_of_sentence.split()
 
         if self.model_type == LanguageModel.UNK:
